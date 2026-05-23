@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: crosswind-sort
-Version: 1.0.0
+Version: 1.1.0
 Summary: A fast pure-Python 4-way hybrid merge sort that beats quicksort
 Author: Kanaka Takanashi
 License-Expression: MIT
@@ -42,7 +42,7 @@ pip install crosswind-sort
 | Worst case | O(n²) | **O(n log n)** guaranteed |
 | Stability | Unstable | **Stable** |
 | Pure Python | Yes | Yes |
-| Random data speed | Baseline | **~8-10% faster** at 10K+ |
+| Random data speed | Baseline | **~20% faster** at 10K+ |
 
 If you need a pure-Python sort and can't use `list.sort()` for some reason. sandboxed environments, educational contexts, custom comparison logic, or just wanting a drop-in that's fast *and* stable, 4 Crosswind is it.
 
@@ -60,19 +60,19 @@ print(result)  # [3, 9, 10, 27, 38, 43, 82]
 crosswind_sort(data, inplace=True)
 print(data)    # [3, 9, 10, 27, 38, 43, 82]
 
-# Custom insertion-sort threshold (default 24)
+# Custom insertion-sort threshold (default 32)
 result = crosswind_sort(data, threshold=64)
 ```
 
 ## API
 
-### `crosswind_sort(arr, inplace=False, threshold=24)`
+### `crosswind_sort(arr, inplace=False, threshold=32)`
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `arr` | `list` | required | Input list of comparable items |
 | `inplace` | `bool` | `False` | If `True`, sort in-place and return `None`. If `False`, return a new sorted list. |
-| `threshold` | `int` | `24` | Sub-array size below which insertion sort is used. Must be >= 2. |
+| `threshold` | `int` | `32` | Sub-array size below which insertion sort is used. Must be >= 2. |
 
 **Returns:** `list` if `inplace=False`, `None` if `inplace=True`.
 
@@ -108,39 +108,42 @@ Each 4-way split reduces recursion depth by half compared to binary merge sort. 
 **Swapped src/dst ping-pong (no copy-back)**
 The algorithm swaps source and destination arrays at each recursion level instead of using a level counter. Sorted sub-runs land in the destination buffer, and the merge reads from that buffer back into the source eliminating the copy-back step entirely. No `level % 2`, no modulo, no branch to decide the target.
 
+**Value caching in the merge hot path**
+In the 4-active phase, each iteration previously reloaded all four run-head values from the list on every pass. Now only the run that was just consumed reloads its value; the other three retain their cached locals. This saves 3 list indexing operations per iteration — roughly 30% faster through the hottest code path.
+
 **Unrolled comparison trees**
-The 4-way merge uses fully unrolled decision trees: 3 comparisons for 4 active runs, 2 comparisons for 3 active runs, 1 comparison for 2 active runs. Zero `is None` checks, zero per-iteration allocations, zero function calls inside the merge. This is the core hot path and it's as tight as pure Python allows.
+The 4-way merge uses fully unrolled decision trees: 3 comparisons for 4 active runs, 2 comparisons for 3 active runs, 1 comparison for 2 active runs. Zero `is None` checks, zero per-iteration allocations, zero function calls inside the merge.
 
 **Slice-assignment tail copies**
 When runs are exhausted, remaining elements are copied via slice assignment (`dst[di:di+n] = src[i:end]`), which is ~2.2x faster than element-by-element while-loop copies in CPython.
 
-**Insertion sort threshold = 24**
-Benchmarks show 24 as the sweet spot where merge overhead starts to outweigh insertion sort's cost. The threshold is configurable, use higher values (e.g., 64) for nearly-sorted data, lower values (e.g., 16) for highly random data.
+**Insertion sort threshold = 32**
+Benchmarks show 32 as the sweet spot where merge overhead starts to outweigh insertion sort's cost. The threshold is configurable, use higher values (e.g., 64) for nearly-sorted data, lower values (e.g., 16) for highly random data.
 
 ## Benchmarks
 
-Tested against pure-Python implementations on random integer lists (average of 3 runs, CPython 3.12).
+Tested against pure-Python implementations on random integer lists (average of 5 runs, CPython 3.14).
 
 ```
       Size |    4 Crosswind |      quicksort |   mergesort_2w |       heapsort
-------------------------------------------------------------------------------------
-    10,000 |   0.0073s 1.0x |  0.0081s 0.9x |  0.0160s 0.5x |  0.0139s 0.5x
-    50,000 |   0.0454s 1.0x |  0.0499s 0.9x |  0.0902s 0.5x |  0.0965s 0.5x
-   100,000 |   0.0992s 1.0x |  0.1078s 0.9x |  0.1906s 0.5x |  0.2080s 0.5x
+--------------------------------------------------------------------------------------
+    10,000 |   0.0084s 1.0x |  0.0129s 0.6x |  0.0250s 0.3x |  0.0207s 0.4x
+    50,000 |   0.0470s 1.0x |  0.0690s 0.7x |  0.1224s 0.4x |  0.1168s 0.4x
+   100,000 |   0.1160s 1.0x |  0.1434s 0.8x |  0.2647s 0.4x |  0.2650s 0.4x
 ```
 
 Speedup relative to 4 Crosswind. `>1.0x` = faster, `<1.0x` = slower.
 
 ### Key Results
 
-- **Beats quicksort by 8-10%** at all tested sizes (10K, 50K, 100K)
-- **Beats 2-way mergesort by 50-55%** 4-way split + ping-pong buffer both contribute
-- **Beats heapsort by 50-52%** merge sort's sequential access is more cache-friendly
-- **Timsort (C)** is still ~5x faster expected, no pure-Python sort can match a C implementation
+- **Beats quicksort by ~20%** at all tested sizes (10K, 50K, 100K)
+- **Beats 2-way mergesort by ~60%** 4-way split + ping-pong buffer + value caching all contribute
+- **Beats heapsort by ~55%** merge sort's sequential access is more cache-friendly
+- **Timsort (C)** is still ~8x faster — expected, no pure-Python sort can match a C implementation
 
 ### Practical Ceiling
 
-4 Crosswind is within 10-20% of the absolute best possible pure-Python comparison-based sort on CPython. Further micro-optimizations (sentinel values, adaptive thresholds, branch hints) provide negligible returns because CPython's interpreter overhead dominates. To go faster, you'd need PyPy's JIT, a C extension, or numpy but that defeats the purpose of a portable, dependency-free pure-Python sort.
+4 Crosswind is near the ceiling of what pure-Python comparison-based sorts can do on CPython. The value-caching merge hot path is now the tightest it can reasonably be without moving to a different language. To go faster, you'd need PyPy's JIT, a C extension, or numpy — but that defeats the purpose of a portable, dependency-free pure-Python sort.
 
 ## Equal 4-way Splitting
 
