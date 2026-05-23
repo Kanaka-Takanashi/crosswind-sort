@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yURI-404/crosswind-sort"
+Homepage = "https://github.com/Kanaka-Takanashi/crosswind-sort"
 
 [tool.setuptools.packages.find]
 where = ["."]
