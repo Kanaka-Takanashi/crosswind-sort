@@ -2,6 +2,12 @@
 
 A fast, **pure-Python**, **stable**, **O(n log n) worst-case** 4-way hybrid merge sort that **beats quicksort** in benchmarks on random data at 10K+ elements.
 
+[![PyPI version](https://img.shields.io/pypi/v/crosswind-sort.svg)](https://pypi.org/project/crosswind-sort/)
+[![Python](https://img.shields.io/pypi/pyversions/crosswind-sort.svg)](https://pypi.org/project/crosswind-sort/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-Kanaka--Takanashi%2Fcrosswind--sort-blue?logo=github)](https://github.com/Kanaka-Takanashi/crosswind-sort)
+
+
 ```
 pip install crosswind-sort
 ```
