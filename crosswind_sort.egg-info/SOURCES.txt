@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+crosswind_sort/__init__.py
+crosswind_sort/__main__.py
+crosswind_sort/_core.py
+crosswind_sort.egg-info/PKG-INFO
+crosswind_sort.egg-info/SOURCES.txt
+crosswind_sort.egg-info/dependency_links.txt
+crosswind_sort.egg-info/top_level.txt
