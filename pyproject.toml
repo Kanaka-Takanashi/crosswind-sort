@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crosswind-sort"
-version = "1.0.0"
+version = "1.1.0"
 description = "A fast pure-Python 4-way hybrid merge sort that beats quicksort"
 readme = "README.md"
 license = "MIT"

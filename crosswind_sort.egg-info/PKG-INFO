@@ -72,7 +72,7 @@ result = crosswind_sort(data, threshold=64)
 |---|---|---|---|
 | `arr` | `list` | required | Input list of comparable items |
 | `inplace` | `bool` | `False` | If `True`, sort in-place and return `None`. If `False`, return a new sorted list. |
-| `threshold` | `int` | `24` | Sub-array size below which insertion sort is used |
+| `threshold` | `int` | `24` | Sub-array size below which insertion sort is used. Must be >= 2. |
 
 **Returns:** `list` if `inplace=False`, `None` if `inplace=True`.
 
