@@ -86,7 +86,7 @@ Each 4-way split reduces recursion depth by half compared to binary merge sort. 
 The algorithm swaps source and destination arrays at each recursion level instead of using a level counter. Sorted sub-runs land in the destination buffer, and the merge reads from that buffer back into the source eliminating the copy-back step entirely. No `level % 2`, no modulo, no branch to decide the target.
 
 **Value caching in the merge hot path**
-In the 4-active phase, each iteration previously reloaded all four run-head values from the list on every pass. Now only the run that was just consumed reloads its value; the other three retain their cached locals. This saves 3 list indexing operations per iteration — roughly 30% faster through the hottest code path.
+In the 4-active phase, each iteration previously reloaded all four run-head values from the list on every pass. Now only the run that was just consumed reloads its value; the other three retain their cached locals. This saves 3 list indexing operations per iteration, roughly 30% faster through the hottest code path.
 
 **Unrolled comparison trees**
 The 4-way merge uses fully unrolled decision trees: 3 comparisons for 4 active runs, 2 comparisons for 3 active runs, 1 comparison for 2 active runs. Zero `is None` checks, zero per-iteration allocations, zero function calls inside the merge.
@@ -116,11 +116,11 @@ Speedup relative to 4 Crosswind. `>1.0x` = faster, `<1.0x` = slower.
 - **Beats quicksort by ~20%** at all tested sizes (10K, 50K, 100K)
 - **Beats 2-way mergesort by ~60%** 4-way split + ping-pong buffer + value caching all contribute
 - **Beats heapsort by ~55%** merge sort's sequential access is more cache-friendly
-- **Timsort (C)** is still ~8x faster — expected, no pure-Python sort can match a C implementation
+- **Timsort (C)** is still ~8x faster as expected, no pure-Python sort can match a C implementation
 
 ### Practical Ceiling
 
-4 Crosswind is near the ceiling of what pure-Python comparison-based sorts can do on CPython. The value-caching merge hot path is now the tightest it can reasonably be without moving to a different language. To go faster, you'd need PyPy's JIT, a C extension, or numpy — but that defeats the purpose of a portable, dependency-free pure-Python sort.
+4 Crosswind is near the ceiling of what pure-Python comparison-based sorts can do on CPython. The value-caching merge hot path is now the tightest it can reasonably be without moving to a different language. To go faster, you'd need PyPy's JIT, a C extension, or numpy. But that defeats the purpose of a portable, dependency-free pure-Python sort.
 
 ## Equal 4-way Splitting
 
